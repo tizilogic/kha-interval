@@ -1,0 +1,15 @@
+{
+	"name": "interval",
+	"url" : "https://github.com/tizilogic/haxe-interval",
+	"license": "MIT",
+	"tags": ["cross", "game"],
+	"description": "2D interval system for kha",
+	"version": "0.0.1",
+	"releasenote": "Initial release.",
+	"contributors": ["tcdude"],
+	"dependencies": {
+		"kha": "",
+		"scenegraph": ""
+	},
+	"classPath": "Sources"
+}
