@@ -306,7 +306,7 @@ class Interval implements Playable {
                 remove(true);
                 return dt;
             case PLAYING:
-                if (IntervalManager._activeNodes.exists(node[id].id) && IntervalManager._activeNodes[node[id].id] & activeModifiers[id] > 0) {
+                if (node[id] != null && IntervalManager._activeNodes.exists(node[id].id) && IntervalManager._activeNodes[node[id].id] & activeModifiers[id] > 0) {
                     _state = FINISHED;
                     if (callback[id] != null) {
                         callback[id]();
@@ -375,11 +375,13 @@ class Interval implements Playable {
                 remove(true);
             }
         }
-        if (IntervalManager._activeNodes.exists(node[id].id)) {
-            IntervalManager._activeNodes[node[id].id] = activeModifiers[id] | IntervalManager._activeNodes[node[id].id];
-        }
-        else {
-            IntervalManager._activeNodes[node[id].id] = activeModifiers[id];
+        if (node[id] != null) {
+            if (IntervalManager._activeNodes.exists(node[id].id)) {
+                IntervalManager._activeNodes[node[id].id] = activeModifiers[id] | IntervalManager._activeNodes[node[id].id];
+            }
+            else {
+                IntervalManager._activeNodes[node[id].id] = activeModifiers[id];
+            }
         }
         return rdt;
     }
