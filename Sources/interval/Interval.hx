@@ -161,14 +161,14 @@ class Interval implements Playable {
     }
 
     // Combined interval factory functions
-    public static function posAlpha(duration:FastFloat, node:Node, eX:FastFloat, ?sX:Null<FastFloat>, eY:FastFloat, ?sY:Null<FastFloat>, eAlpha:FastFloat, ?sAlpha:Null<FastFloat>, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
-        var ival = pos(duration, node, eX, sX, eY, sY, blend, callback, rel, keepAlive);
+    public static function posAlpha(duration:FastFloat, node:Node, posMod:PosMod, eAlpha:FastFloat, ?sAlpha:Null<FastFloat>, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
+        var ival = pos(duration, node, posMod, blend, callback, rel, keepAlive);
         ival.alphaMod(eAlpha, sAlpha);
         return ival;
     }
 
-    public static function posAngle(duration:FastFloat, node:Node, eX:FastFloat, ?sX:Null<FastFloat>, eY:FastFloat, ?sY:Null<FastFloat>, eAngle:FastFloat, ?sAngle:Null<FastFloat>, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
-        var ival = pos(duration, node, eX, sX, eY, sY, blend, callback, rel, keepAlive);
+    public static function posAngle(duration:FastFloat, node:Node, posMod:PosMod, eAngle:FastFloat, ?sAngle:Null<FastFloat>, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
+        var ival = pos(duration, node, posMod, blend, callback, rel, keepAlive);
         ival.angleMod(eAngle, sAngle);
         return ival;
     }
@@ -564,8 +564,8 @@ class IntervalManager {
 
     public static function step(dt:FastFloat) {
         _activeNodes.clear();
-        for (i in _playQueue) {
-            i.step(dt);
+        for (i in 0..._playQueue.length) {
+            _playQueue[_playQueue.length - 1 - i].step(dt);
         }
         while (_removeQueue.length > 0) {
             _playQueue.remove(_removeQueue.pop());
