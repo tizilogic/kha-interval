@@ -110,10 +110,10 @@ class Interval implements Playable {
         return ival;
     }
 
-    public static function pos(duration:FastFloat, node:Node, eX:FastFloat, ?sX:Null<FastFloat>, eY:FastFloat, ?sY:Null<FastFloat>, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
+    public static function pos(duration:FastFloat, node:Node, posMod:PosMod, ?blend:BlendType = LINEAR, ?callback:Void -> Void = null, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
         var ival = getInterval(duration, node, blend, rel, keepAlive);
-        ival.xMod(eX, sX);
-        ival.yMod(eY, sY);
+        ival.xMod(posMod.eX, posMod.sX);
+        ival.yMod(posMod.eY, posMod.sY);
         Interval.callback[ival.id] = callback;
         return ival;
     }

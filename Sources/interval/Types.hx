@@ -79,3 +79,5 @@ interface Playable {
     public function remove(?_auto:Bool = false):Void;
     public function loop(?_set:Bool = true):Void;
 }
+
+typedef PosMod = {eX:FastFloat, eY:FastFloat, ?sX:Null<FastFloat>, ?sY:Null<FastFloat>};
