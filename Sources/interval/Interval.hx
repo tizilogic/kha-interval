@@ -373,11 +373,11 @@ class Interval implements Playable {
             func[id](k);
         }
         if (rdt != -1) {
-            if (callback[id] != null) {
-                callback[id]();
-            }
             _state = FINISHED;
             if (_loop) {
+                if (callback[id] != null) {
+                    callback[id]();
+                }
                 play();
                 return step(rdt);
             }
