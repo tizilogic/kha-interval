@@ -54,6 +54,7 @@ abstract Modifier (Int) to Int {
     var ESCALEY = 2048;
     var RNODE = 4096;
     var FUNC = 8192;
+    var PAUSE = 16384;
 }
 
 
