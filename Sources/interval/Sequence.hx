@@ -71,9 +71,6 @@ class Sequence implements Playable {
             switch (_state) {
                 case PAUSED | NOT_STARTED: return -1;
                 case FINISHED:
-                    if (_callback != null) {
-                        _callback();
-                    }
                     remove(true);
                     return dt;
                 case PLAYING:
@@ -105,6 +102,9 @@ class Sequence implements Playable {
     }
 
     public inline function remove(?_auto:Bool = false):Void {
+        if (_callback != null) {
+            _callback();
+        }
         if (!inSequence) {
             IntervalManager._removeQueue.push(this);
         }

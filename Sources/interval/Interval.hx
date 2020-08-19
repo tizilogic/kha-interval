@@ -316,17 +316,11 @@ class Interval implements Playable {
             case START: reset();
             case PAUSED | NOT_STARTED: return -1;
             case FINISHED:
-                if (callback[id] != null) {
-                    callback[id]();
-                }
                 remove(true);
                 return dt;
             case PLAYING:
                 if (node[id] != null && IntervalManager._activeNodes.exists(node[id].id) && IntervalManager._activeNodes[node[id].id] & activeModifiers[id] > 0) {
                     _state = FINISHED;
-                    if (callback[id] != null) {
-                        callback[id]();
-                    }
                     remove(true);
                     return -2;
                 }
@@ -447,6 +441,9 @@ class Interval implements Playable {
     }
 
     public inline function remove(?_auto:Bool = false):Void {
+        if (callback[id] != null) {
+            callback[id]();
+        }
         if (!inSequence) {
             IntervalManager._removeQueue.push(this);
         }
