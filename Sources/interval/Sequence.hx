@@ -111,6 +111,9 @@ class Sequence implements Playable {
         if (!inSequence) {
             IntervalManager._removeQueue.push(this);
         }
+        for (i in _interval) {
+            i.remove();
+        }
     }
 
     public inline function loop(?_set:Bool = true) {
