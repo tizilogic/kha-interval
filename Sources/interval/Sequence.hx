@@ -10,7 +10,8 @@ class Sequence implements Playable {
     private var _loop:Bool;
     private var _interval:Array<Playable>;
     private var _cursor:Int = -1;
-    private var _callback:Void -> Void;
+    public var callback:Void -> Void;
+    public var beforeCallback:Void -> Void;
     private var _state:PlaybackState = NOT_STARTED;
     private var _keepAlive:Bool;
 
@@ -41,7 +42,9 @@ class Sequence implements Playable {
         else if (_state != NOT_STARTED && _state != FINISHED && _state != PAUSED) {
             throw "Invalid state to call play";
         }
-
+        if (_state != PAUSED && beforeCallback != null) {
+            beforeCallback();
+        }
         IntervalManager._playQueue.push(this);
         _cursor = 0;
         _interval[0].play();
@@ -102,8 +105,8 @@ class Sequence implements Playable {
     }
 
     public inline function remove(?_auto:Bool = false):Void {
-        if (_callback != null) {
-            _callback();
+        if (callback != null) {
+            callback();
         }
         if (!inSequence) {
             IntervalManager._removeQueue.push(this);

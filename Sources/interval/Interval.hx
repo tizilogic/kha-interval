@@ -36,6 +36,7 @@ class Interval implements Playable {
     private static var func = new Array<FastFloat -> Void>();  // 4096
     private static var blendType:Array<BlendType> = new Array<BlendType>();
     private static var callback:Array<Void -> Void> = new Array<Void -> Void>();
+    private static var beforeCallback:Array<Void -> Void> = new Array<Void -> Void>();
     private static var _free = new Array<Int>();
     private static var _freeIntervals = new Array<Interval>();
 
@@ -49,6 +50,7 @@ class Interval implements Playable {
             rNode[id] = rel;
             blendType[id] = blend;
             callback[id] = null;
+            beforeCallback[id] = null;
         }
         else {
             id = Interval.node.length;
@@ -71,6 +73,7 @@ class Interval implements Playable {
             rNode.push(rel);
             blendType.push(blend);
             callback.push(null);
+            beforeCallback.push(null);
         }
         activeModifiers[id] = rNode[id] != null ? RNODE : 0;
         return id;
@@ -280,6 +283,10 @@ class Interval implements Playable {
         Interval.callback[id] = cb;
     }
 
+    public inline function setBeforeCallback(cb:Void -> Void) {
+        Interval.beforeCallback[id] = cb;
+    }
+
     public inline function play():Void {
         if (_state != NOT_STARTED && _state != FINISHED && _state != PAUSED) {
             throw "Invalid state to call play";
@@ -438,6 +445,9 @@ class Interval implements Playable {
         }
         _state = PLAYING;
         _first = false;
+        if (beforeCallback[id] != null) {
+            beforeCallback[id]();
+        }
     }
 
     public inline function remove(?_auto:Bool = false):Void {
