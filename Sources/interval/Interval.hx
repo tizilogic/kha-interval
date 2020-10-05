@@ -95,6 +95,7 @@ class Interval implements Playable {
             Interval.activeModifiers[ival.id] = 0;
             Interval.cursor[ival.id] = -1;
             ival.setRelativeNode(rel);
+            ival._invalid = false;
             return ival;
         }
         return new Interval(duration, node, blend, rel, keepAlive);
@@ -198,6 +199,7 @@ class Interval implements Playable {
     private var _first:Bool = true;
     private var _state:PlaybackState = NOT_STARTED;
     private var _keepAlive:Bool;
+    private var _invalid = false;
 
     private function new(duration:FastFloat, node:Node, ?blend:BlendType = LINEAR, ?rel:Node = null, ?keepAlive:Bool = false) {
         id = newId(duration, node, blend, rel);
@@ -451,6 +453,9 @@ class Interval implements Playable {
     }
 
     public inline function remove(?_auto:Bool = false):Void {
+        if (_invalid) {
+            return;
+        }
         if (callback[id] != null) {
             callback[id]();
         }
@@ -460,6 +465,7 @@ class Interval implements Playable {
         if (!_keepAlive || !_auto) {
             removeId(id);
         }
+        _invalid = true;
     }
 
     public inline function loop(?_set:Bool = true) {

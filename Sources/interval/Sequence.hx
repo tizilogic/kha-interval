@@ -14,6 +14,7 @@ class Sequence implements Playable {
     public var beforeCallback:Void -> Void;
     private var _state:PlaybackState = NOT_STARTED;
     private var _keepAlive:Bool;
+    private var _invalid = false;
 
     public function new(?intervals:Array<Playable> = null) {
         inSequence = false;
@@ -105,6 +106,9 @@ class Sequence implements Playable {
     }
 
     public inline function remove(?_auto:Bool = false):Void {
+        if (_invalid) {
+            return;
+        }
         if (callback != null) {
             callback();
         }
@@ -114,6 +118,7 @@ class Sequence implements Playable {
         for (i in _interval) {
             i.remove();
         }
+        _invalid = true;
     }
 
     public inline function loop(?_set:Bool = true) {
