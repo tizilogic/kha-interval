@@ -329,9 +329,10 @@ class Interval implements Playable {
                 return dt;
             case PLAYING:
                 if (node[id] != null && IntervalManager._activeNodes.exists(node[id].id) && IntervalManager._activeNodes[node[id].id] & activeModifiers[id] > 0) {
-                    _state = FINISHED;
-                    remove(true);
-                    return -2;
+                    trace("Interval node conflict occurred!");
+                    // _state = FINISHED;
+                    // remove(true);
+                    // return -2;
                 }
             default:
         }
