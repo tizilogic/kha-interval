@@ -42,6 +42,13 @@ class Parallel implements Playable {
         _interval.push(ival);
     }
 
+    public inline function setSync(syncStart:Bool) {
+        if (_state == PLAYING || _state == PAUSED) {
+            throw "Cannot change sync while playback is active";
+        }
+        _syncStart = syncStart;
+    }
+
     public inline function play():Void {
         if (_interval.length == 0) {
             throw "Empty parallel";
