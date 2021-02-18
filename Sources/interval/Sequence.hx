@@ -33,6 +33,8 @@ class Sequence implements Playable {
 
     public inline function append(ival:Playable) {
         ival.inSequence = true;
+        ival._loop = false;
+        ival._keepAlive = true;
         _interval.push(ival);
     }
 
@@ -47,8 +49,10 @@ class Sequence implements Playable {
             beforeCallback();
         }
         IntervalManager._playQueue.push(this);
-        _cursor = 0;
-        _interval[0].play();
+        if (_state != PAUSED) {
+            _cursor = 0;
+            _interval[0].play();
+        }
         _state = PLAYING;
     }
 
@@ -67,6 +71,8 @@ class Sequence implements Playable {
         if (_cursor != -1) {
             _interval[_cursor].stop();
         }
+        _state = NOT_STARTED;
+        _cursor = -1;
     }
 
     public inline function step(dt:FastFloat):FastFloat {
