@@ -134,4 +134,12 @@ class Sequence implements Playable {
         }
         throw "Index out of range";
     }
+
+    public inline function length():FastFloat {
+        var len:FastFloat = 0.0;
+        for (i in _interval) {
+            len += i.length();
+        }
+        return len;
+    }
 }

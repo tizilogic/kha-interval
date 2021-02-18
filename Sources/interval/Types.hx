@@ -79,6 +79,7 @@ interface Playable {
     public function step(dt:FastFloat):FastFloat;
     public function remove(?_auto:Bool = false):Void;
     public function loop(?_set:Bool = true):Void;
+    public function length():FastFloat;
 }
 
 typedef PosMod = {eX:FastFloat, eY:FastFloat, ?sX:Null<FastFloat>, ?sY:Null<FastFloat>};

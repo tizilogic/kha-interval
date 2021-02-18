@@ -472,4 +472,8 @@ class Interval implements Playable {
     public inline function loop(?_set:Bool = true) {
         _loop = _set;
     }
+
+    public inline function length():FastFloat {
+        return duration[id];
+    }
 }
