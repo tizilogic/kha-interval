@@ -14,7 +14,7 @@ import scenegraph.Node;
  * to control instantiation. At runtime, finished, non looping Interval instances will be retained
  * in memory to prevent GC and reused to skip allocation.
  */
-@:allow(interval.Sequence)
+@:allow(interval.Parallel, interval.Sequence)
 class Interval implements Playable {
     private static var node = new Array<Node>();
     private static var duration = new Array<FastFloat>();
@@ -37,65 +37,51 @@ class Interval implements Playable {
     private static var blendType:Array<BlendType> = new Array<BlendType>();
     private static var callback:Array<Void -> Void> = new Array<Void -> Void>();
     private static var beforeCallback:Array<Void -> Void> = new Array<Void -> Void>();
-    private static var _free = new Array<Int>();
     private static var _freeIntervals = new Array<Interval>();
 
     private static function newId(dur:FastFloat, node:Node, ?blend:BlendType = LINEAR, ?rel:Node = null):Int {
-        var id:Int;
-        if (_free.length > 0) {
-            id = _free.pop();
-            Interval.node[id] = node;
-            duration[id] = dur;
-            cursor[id] = -1;
-            rNode[id] = rel;
-            blendType[id] = blend;
-            callback[id] = null;
-            beforeCallback[id] = null;
-        }
-        else {
-            id = Interval.node.length;
-            Interval.node.push(node);
-            duration.push(dur);
-            cursor.push(-1);
-            activeModifiers.push(0);
-            sX.push(0);
-            eX.push(0);
-            sY.push(0);
-            eY.push(0);
-            sAlpha.push(0);
-            eAlpha.push(0);
-            sAngle.push(0);
-            eAngle.push(0);
-            sScaleX.push(0);
-            eScaleX.push(0);
-            sScaleY.push(0);
-            eScaleY.push(0);
-            rNode.push(rel);
-            blendType.push(blend);
-            callback.push(null);
-            beforeCallback.push(null);
-        }
+        var id:Int = Interval.node.length;
+        Interval.node.push(node);
+        duration.push(dur);
+        cursor.push(-1);
+        activeModifiers.push(0);
+        sX.push(0);
+        eX.push(0);
+        sY.push(0);
+        eY.push(0);
+        sAlpha.push(0);
+        eAlpha.push(0);
+        sAngle.push(0);
+        eAngle.push(0);
+        sScaleX.push(0);
+        eScaleX.push(0);
+        sScaleY.push(0);
+        eScaleY.push(0);
+        rNode.push(rel);
+        blendType.push(blend);
+        callback.push(null);
+        beforeCallback.push(null);
         activeModifiers[id] = rNode[id] != null ? RNODE : 0;
         return id;
     }
 
-    private static function removeId(id:Int) {
-        _free.push(id);
-    }
-
     private static function getInterval(duration:FastFloat, node:Node, ?blend:BlendType = LINEAR, ?rel:Node = null, ?keepAlive:Bool = false):Interval {
         if (_freeIntervals.length > 0) {
-            var ival =  _freeIntervals.pop();
+            var ival = _freeIntervals.shift();
+            ival._first = true;
+            ival.inSequence = false;
+            ival._invalid = false;
             ival._loop = false;
             ival._keepAlive = keepAlive;
             ival._state = NOT_STARTED;
             Interval.duration[ival.id] = duration;
             Interval.blendType[ival.id] = blend;
             Interval.callback[ival.id] = null;
+            Interval.beforeCallback[ival.id] = null;
             Interval.activeModifiers[ival.id] = 0;
             Interval.cursor[ival.id] = -1;
+            Interval.node[ival.id] = node;
             ival.setRelativeNode(rel);
-            ival._invalid = false;
             return ival;
         }
         return new Interval(duration, node, blend, rel, keepAlive);
@@ -328,8 +314,8 @@ class Interval implements Playable {
                 remove(true);
                 return dt;
             case PLAYING:
-                if (node[id] != null && IntervalManager._activeNodes.exists(node[id].id) && IntervalManager._activeNodes[node[id].id] & activeModifiers[id] > 0) {
-                    trace("Interval node conflict occurred!");
+                if (node[id] != null && IntervalManager._activeNodes.exists(node[id].id) && (IntervalManager._activeNodes[node[id].id] & activeModifiers[id]) > 0) {
+                    trace("Interval node conflict occurred with: " + node[id] + " @ " + cursor[id] + "s" + " Interval " + id + " ActiveModNode " + IntervalManager._activeNodes[node[id].id] + "ActiveModIVAL " + activeModifiers[id]);
                     // _state = FINISHED;
                     // remove(true);
                     // return -2;
@@ -395,7 +381,7 @@ class Interval implements Playable {
                 remove(true);
             }
         }
-        if (node[id] != null) {
+        if (node[id] != null && rdt < 0 && activeModifiers[id] != PAUSE) {
             if (IntervalManager._activeNodes.exists(node[id].id)) {
                 IntervalManager._activeNodes[node[id].id] = activeModifiers[id] | IntervalManager._activeNodes[node[id].id];
             }
@@ -455,6 +441,10 @@ class Interval implements Playable {
 
     public inline function remove(?_auto:Bool = false):Void {
         if (_invalid) {
+            trace("Attempted to remove invalid Interval: " + this);
+            return;
+        }
+        if (_auto && inSequence) {
             return;
         }
         if (callback[id] != null) {
@@ -464,7 +454,9 @@ class Interval implements Playable {
             IntervalManager._removeQueue.push(this);
         }
         if (!_keepAlive || !_auto) {
-            removeId(id);
+            if (!_invalid) {
+                _freeIntervals.push(this);
+            }
         }
         _invalid = true;
     }
@@ -475,5 +467,31 @@ class Interval implements Playable {
 
     public inline function length():FastFloat {
         return duration[id];
+    }
+
+    public function toString():String {
+        var s = "Interval " + id + ": ";
+        if (node[id] != null) {
+            s = s + "Node '" + node[id] + "' ";
+        }
+        else {
+            if (activeModifiers[id] & FUNC > 0) {
+                return "FUNC Interval " + id;
+            }
+            return s + "<NOP>";
+        }
+        s = s + " <";
+        final modMap = [EX => "X", EY => "Y", EALPHA => "Alpha", ESCALEX => "ScaleX", ESCALEY => "ScaleY", EANGLE => "Angle"];
+        var first = true;
+        for (i in modMap.keys()) {
+            if (activeModifiers[id] & i > 0) {
+                if (!first) {
+                    s = s + " ";
+                }
+                s = s + modMap[i];
+                first = false;
+            }
+        }
+        return s + ">";
     }
 }

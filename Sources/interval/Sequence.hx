@@ -5,6 +5,7 @@ import interval.IntervalManager;
 import interval.Types;
 
 
+@:allow(interval.Parallel)
 class Sequence implements Playable {
     public var inSequence:Bool;
     private var _loop:Bool;
@@ -48,8 +49,10 @@ class Sequence implements Playable {
         if (_state != PAUSED && beforeCallback != null) {
             beforeCallback();
         }
-        IntervalManager._playQueue.push(this);
         if (_state != PAUSED) {
+            if (!inSequence) {
+                IntervalManager._playQueue.push(this);
+            }
             _cursor = 0;
             _interval[0].play();
         }
@@ -79,11 +82,16 @@ class Sequence implements Playable {
         var rdt = dt;
         while (rdt >= 0) {
             switch (_state) {
-                case PAUSED | NOT_STARTED: return -1;
+                case PAUSED | NOT_STARTED:
+                    rdt = -1;
+                    break;
                 case FINISHED:
                     remove(true);
-                    return dt;
+                    break;
                 case PLAYING:
+                    if (_interval[_cursor] == null) {
+                        break;
+                    }
                     rdt = _interval[_cursor].step(rdt);
                     if (rdt == -1) {
                         break;
@@ -115,6 +123,9 @@ class Sequence implements Playable {
         if (_invalid) {
             return;
         }
+        if (_auto && inSequence) {
+            return;
+        }
         if (callback != null) {
             callback();
         }
@@ -122,6 +133,7 @@ class Sequence implements Playable {
             IntervalManager._removeQueue.push(this);
         }
         for (i in _interval) {
+            i._keepAlive = false;
             i.remove();
         }
         _invalid = true;
@@ -147,5 +159,18 @@ class Sequence implements Playable {
             len += i.length();
         }
         return len;
+    }
+
+    public function toString():String {
+        var s = "\nSequence (";
+        var first = true;
+        for (i in _interval) {
+            if (!first) {
+                s = s + " ";
+            }
+            s = s + i;
+            first = false;
+        }
+        return s + ")";
     }
 }

@@ -7,6 +7,7 @@ import interval.Sequence;
 import interval.Types;
 
 
+@:allow(interval.Sequence)
 class Parallel implements Playable {
     public var inSequence:Bool;
     private var _loop:Bool;
@@ -59,9 +60,19 @@ class Parallel implements Playable {
         if (_state != PAUSED && beforeCallback != null) {
             beforeCallback();
         }
-        IntervalManager._playQueue.push(this);
         if (_state != PAUSED) {
+            if (!inSequence) {
+                IntervalManager._playQueue.push(this);
+            }
             _reset();
+        }
+        for (i in _sequences) {
+            if (_state == PAUSED) {
+                i.resume();
+            }
+            else {
+                i.play();
+            }
         }
         _state = PLAYING;
     }
@@ -82,8 +93,9 @@ class Parallel implements Playable {
 
         for (i in _interval) {
             var iLen = i.length();
+            var s = new Sequence();
+            s.inSequence = true;
             if (iLen < maxLen) {
-                var s = new Sequence();
                 if (_syncStart) {
                     s.append(i);
                     s.append(Interval.nop(maxLen - iLen));
@@ -91,20 +103,28 @@ class Parallel implements Playable {
                     s.append(Interval.nop(maxLen - iLen));
                     s.append(i);
                 }
+                _sequences.push(s);
             }
             else {
-                _sequences.push(new Sequence([i]));
+                s.append(i);
+                _sequences.push(s);
             }
         }
     }
 
     public inline function pause():Void {
+        for (i in _sequences) {
+            i.pause();
+        }
         _state = PAUSED;
     }
 
     public inline function resume():Void {
         if (_state != PAUSED) {
             throw "Can only resume paused Sequence";
+        }
+        for (i in _sequences) {
+            i.resume();
         }
         _state = PLAYING;
     }
@@ -127,7 +147,11 @@ class Parallel implements Playable {
                 return dt;
             case PLAYING:
                 for (s in _sequences) {
-                    rdt = s.step(dt);
+                    var tmpdt = s.step(dt);
+                    rdt = rdt > tmpdt ? tmpdt : rdt;
+                }
+                if (rdt != -1) {
+                    remove(true);
                 }
             default:
         }
@@ -138,6 +162,9 @@ class Parallel implements Playable {
         if (_invalid) {
             return;
         }
+        if (_auto && inSequence) {
+            return;
+        }
         if (callback != null) {
             callback();
         }
@@ -146,6 +173,7 @@ class Parallel implements Playable {
         }
         if (_sequences != null && _sequences.length > 0) {
             for (s in _sequences) {
+                s._keepAlive = false;
                 s.remove();
             }
             _sequences.resize(0);
@@ -175,5 +203,18 @@ class Parallel implements Playable {
             }
         }
         return len;
+    }
+
+    public function toString():String {
+        var s = "\n\nParallel (";
+        var first = true;
+        for (i in _interval) {
+            if (!first) {
+                s = s + " ";
+            }
+            s = s + i;
+            first = false;
+        }
+        return s + ")";
     }
 }
