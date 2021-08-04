@@ -1,7 +1,7 @@
 {
 	"name": "interval",
 	"url" : "https://github.com/tizilogic/haxe-interval",
-	"license": "MIT",
+	"license": "zlib",
 	"tags": ["cross", "game"],
 	"description": "2D interval system for kha",
 	"version": "0.0.1",
